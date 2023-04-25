@@ -1,0 +1,64 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.0.0
+MinimumVisualStudioVersion = 16.0.0.0
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Server", "SketchSphere.UI\Server\SketchSphere.UI.Server.csproj", "{E285D7D3-D425-45D8-B40B-66363D4F52DF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Client", "SketchSphere.UI\Client\SketchSphere.UI.Client.csproj", "{A65683ED-1E8A-42B2-A8F7-D269336EA227}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Shared", "SketchSphere.UI\Shared\SketchSphere.UI.Shared.csproj", "{CDDA7D20-A293-4507-8E8A-ED91785BE52B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|x64.Build.0 = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Debug|x86.Build.0 = Debug|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|x64.ActiveCfg = Release|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|x64.Build.0 = Release|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|x86.ActiveCfg = Release|Any CPU
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227}.Release|x86.Build.0 = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|x64.Build.0 = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Debug|x86.Build.0 = Debug|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|x64.ActiveCfg = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|x64.Build.0 = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|x86.ActiveCfg = Release|Any CPU
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF}.Release|x86.Build.0 = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|x64.Build.0 = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Debug|x86.Build.0 = Debug|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x64.ActiveCfg = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x64.Build.0 = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x86.ActiveCfg = Release|Any CPU
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {08F93C7F-9B41-4979-BCE6-A8835FD97590}
+	EndGlobalSection
+EndGlobal
