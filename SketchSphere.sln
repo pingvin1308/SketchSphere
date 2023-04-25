@@ -2,11 +2,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.0.0
 MinimumVisualStudioVersion = 16.0.0.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Server", "SketchSphere.UI\Server\SketchSphere.UI.Server.csproj", "{E285D7D3-D425-45D8-B40B-66363D4F52DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Server", "src\SketchSphere.UI\Server\SketchSphere.UI.Server.csproj", "{E285D7D3-D425-45D8-B40B-66363D4F52DF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Client", "SketchSphere.UI\Client\SketchSphere.UI.Client.csproj", "{A65683ED-1E8A-42B2-A8F7-D269336EA227}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Client", "src\SketchSphere.UI\Client\SketchSphere.UI.Client.csproj", "{A65683ED-1E8A-42B2-A8F7-D269336EA227}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Shared", "SketchSphere.UI\Shared\SketchSphere.UI.Shared.csproj", "{CDDA7D20-A293-4507-8E8A-ED91785BE52B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SketchSphere.UI.Shared", "src\SketchSphere.UI\Shared\SketchSphere.UI.Shared.csproj", "{CDDA7D20-A293-4507-8E8A-ED91785BE52B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CE983025-83F0-4AB6-8FF1-64AE3F74C6B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D9857560-7568-427E-9798-18F9B68F4FD0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SketchSphere.UnitTests", "tests\SketchSphere.UnitTests\SketchSphere.UnitTests.csproj", "{6001CE53-09E7-443F-A1F4-DC72AB3762C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,11 +60,29 @@ Global
 		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x64.Build.0 = Release|Any CPU
 		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x86.ActiveCfg = Release|Any CPU
 		{CDDA7D20-A293-4507-8E8A-ED91785BE52B}.Release|x86.Build.0 = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|x64.Build.0 = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Debug|x86.Build.0 = Debug|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|x64.ActiveCfg = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|x64.Build.0 = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|x86.ActiveCfg = Release|Any CPU
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {08F93C7F-9B41-4979-BCE6-A8835FD97590}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A65683ED-1E8A-42B2-A8F7-D269336EA227} = {CE983025-83F0-4AB6-8FF1-64AE3F74C6B9}
+		{E285D7D3-D425-45D8-B40B-66363D4F52DF} = {CE983025-83F0-4AB6-8FF1-64AE3F74C6B9}
+		{CDDA7D20-A293-4507-8E8A-ED91785BE52B} = {CE983025-83F0-4AB6-8FF1-64AE3F74C6B9}
+		{6001CE53-09E7-443F-A1F4-DC72AB3762C2} = {D9857560-7568-427E-9798-18F9B68F4FD0}
 	EndGlobalSection
 EndGlobal
