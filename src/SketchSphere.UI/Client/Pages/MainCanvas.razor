@@ -1,0 +1,144 @@
+﻿@page "/maincanvas"
+@using Microsoft.AspNetCore.Components
+@using Blazor.Extensions.Canvas.Canvas2D
+@using Blazor.Extensions
+
+<PageTitle>MainCanvas</PageTitle>
+
+<div
+    onmousemove="@OnMouseMoveAsync"
+    onmousedown="@OnMouseDownAsync"
+    onmouseup="@OnMouseUpAsync">
+    <BECanvas
+        Width="@_width"
+        Height="@_height"
+        @ref="_canvasReference">
+    </BECanvas>
+</div>
+
+@code {
+    private int _width = 500;
+    private int _height = 500;
+
+    private Canvas2DContext _context;
+    private BECanvasComponent _canvasReference;
+
+    private bool _isMouseDown;
+    private bool _isDrawingStated;
+
+    private List<(double x, double y)> _points = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _context = await _canvasReference.CreateCanvas2DAsync();
+
+        if (firstRender)
+        {
+            await _context.SetFillStyleAsync("#1e1e1e");
+            await _context.FillRectAsync(0, 0, _width, _height);
+        }
+    }
+
+    private async Task OnMouseMoveAsync(MouseEventArgs e)
+    {
+    // Console.WriteLine($"X: {e.OffsetX} Y: {e.OffsetY}");
+    // await this._context.SetFillStyleAsync("#1e1e1e");a
+    // await this._context.FillRectAsync(0, 0, _width, _height);
+    // await this._context.SetFillStyleAsync("#ffffff");
+    // await this._context.FillTextAsync($"X: {e.ClientX} Y: {e.ClientY}", 10, 20);
+
+        if (_isMouseDown)
+        {
+            var x = e.OffsetX;
+            var y = e.OffsetY;
+            var prevX = e.MovementX;
+            var prevY = e.MovementY;
+
+            if (!_isDrawingStated)
+            {
+                await _context.SetStrokeStyleAsync("#ffffff");
+                await _context.SetLineWidthAsync(3);
+                await _context.SetLineCapAsync(LineCap.Round); // Задайте форму конца линии (round, square, butt)
+                await _context.SetLineJoinAsync(LineJoin.Round); // Задайте форму соединения линий (round, bevel, miter)
+                _isDrawingStated = true;
+            }
+
+            _points.Add((x, y));
+
+            await DrawPointAsync(x, y, prevX, prevY);
+        }
+    }
+
+    private async Task OnMouseDownAsync(MouseEventArgs e)
+    {
+        Console.WriteLine($"Click - X: {e.OffsetX} Y: {e.OffsetY}");
+        var x = e.OffsetX;
+        var y = e.OffsetY;
+        _isMouseDown = true;
+
+        await DrawRectDiamondAsync(x, y);
+    }
+
+    private async Task OnMouseUpAsync(MouseEventArgs e)
+    {
+        _isMouseDown = false;
+        _isDrawingStated = false;
+    }
+
+
+    private async Task DrawPointAsync(double x, double y, double prevX, double prevY)
+    {
+        await _context.BeginPathAsync();
+
+        await _context.MoveToAsync(_points[0].x, _points[0].y);
+        
+        for (var i = 1; i < _points.Count; i++)
+        {
+            var point = _points[i];
+            await _context.LineToAsync(point.x, point.y);
+        }
+
+    // await _context.ArcAsync(x, y, 3, 0, Math.PI * 2);
+    // await _context.LineToAsync(x - prevX, y - prevY);
+    // await _context.LineToAsync(x, y);
+
+    // await _context.ArcAsync(x - prevX, y - prevY, 3, 0, Math.PI * 2);
+    // await _context.ArcAsync(x, y, 3, 0, Math.PI * 2);
+    // await _context.StrokeAsync();
+        
+        //
+        // await _context.LineToAsync(x, y);
+        await _context.StrokeAsync();
+        await _context.ClosePathAsync();
+    }
+
+    private async Task DrawRectDiamondAsync(double x, double y)
+    {
+        const double width = 50;
+        const double height = 50;
+
+        await _context.SetStrokeStyleAsync("#ffffff");
+        await _context.BeginPathAsync();
+        await _context.MoveToAsync(x - width / 2, y);
+        await _context.LineToAsync(x, y - height / 2);
+        await _context.LineToAsync(x + width / 2, y);
+        await _context.LineToAsync(x, y + height / 2);
+        await _context.LineToAsync(x - width / 2, y);
+        await _context.StrokeAsync();
+    }
+
+    private async Task DrawCircleAsync(double x, double y)
+    {
+        await _context.SetStrokeStyleAsync("#ffffff");
+        await _context.BeginPathAsync();
+        await _context.ArcAsync(x, y, 25, 0, Math.PI * 2);
+        await _context.StrokeAsync();
+    }
+
+    private async Task DrawRectAsync(double x, double y)
+    {
+        await _context.SetStrokeStyleAsync("#ffffff");
+        await _context.StrokeRectAsync(x, y, 50, 50);
+    }
+
+}
