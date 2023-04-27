@@ -5,6 +5,8 @@
 
 <PageTitle>MainCanvas</PageTitle>
 
+<button onclick="@ClearCanvasAsync">Cleara</button>
+
 <div
     onmousemove="@OnMouseMoveAsync"
     onmousedown="@OnMouseDownAsync"
@@ -26,7 +28,10 @@
     private bool _isMouseDown;
     private bool _isDrawingStated;
 
-    private List<(double x, double y)> _points = new();
+    private List<DrawingObject> _drawingObjects = new();
+
+    private Freedraw? _currentFreedraw;
+    private Line? _currentLine;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -34,38 +39,50 @@
 
         if (firstRender)
         {
-            await _context.SetFillStyleAsync("#1e1e1e");
-            await _context.FillRectAsync(0, 0, _width, _height);
+            await ClearCanvasAsync();
         }
+
+    // await RenderAsync();
     }
 
     private async Task OnMouseMoveAsync(MouseEventArgs e)
     {
-    // Console.WriteLine($"X: {e.OffsetX} Y: {e.OffsetY}");
-    // await this._context.SetFillStyleAsync("#1e1e1e");a
-    // await this._context.FillRectAsync(0, 0, _width, _height);
-    // await this._context.SetFillStyleAsync("#ffffff");
-    // await this._context.FillTextAsync($"X: {e.ClientX} Y: {e.ClientY}", 10, 20);
-
         if (_isMouseDown)
         {
             var x = e.OffsetX;
             var y = e.OffsetY;
-            var prevX = e.MovementX;
-            var prevY = e.MovementY;
 
             if (!_isDrawingStated)
             {
-                await _context.SetStrokeStyleAsync("#ffffff");
-                await _context.SetLineWidthAsync(3);
-                await _context.SetLineCapAsync(LineCap.Round); // Задайте форму конца линии (round, square, butt)
-                await _context.SetLineJoinAsync(LineJoin.Round); // Задайте форму соединения линий (round, bevel, miter)
-                _isDrawingStated = true;
+    // await _context.SetStrokeStyleAsync("#ffffff");
+    // await _context.SetLineWidthAsync(3);
+    // await _context.SetLineCapAsync(LineCap.Round);
+    // await _context.SetLineJoinAsync(LineJoin.Round);
+    // _isDrawingStated = true;
+    // await _context.BeginPathAsync();
             }
 
-            _points.Add((x, y));
+            if (_currentFreedraw != null)
+            {
+    // await _currentFreedraw.AddPointAsync(_context, x, y);
+            }
+    // _currentFreedraw?.DrawAsync(_context);
 
-            await DrawPointAsync(x, y, prevX, prevY);
+            if (_currentLine != null)
+            {
+                await ClearCanvasAsync();
+                await _currentLine.SetEndAsync(_context, x, y);
+            }
+        }
+    }
+
+    private async Task RenderAsync()
+    {
+    // await ClearCanvasAsync();
+
+        foreach (var drawingObject in _drawingObjects)
+        {
+            await drawingObject.DrawAsync(_context);
         }
     }
 
@@ -76,69 +93,161 @@
         var y = e.OffsetY;
         _isMouseDown = true;
 
-        await DrawRectDiamondAsync(x, y);
+    // _drawingObjects.Add(new Rectangle(x, y));
+    // _drawingObjects.Add(new Circle(x + 100, y));
+    // _drawingObjects.Add(new Diamond(x, y));
+    // _currentFreedraw = new Freedraw(x, y);
+    // _drawingObjects.Add(_currentFreedraw);
+        _currentLine = new Line(x, y);
+        _drawingObjects.Add(_currentLine);
     }
 
     private async Task OnMouseUpAsync(MouseEventArgs e)
     {
         _isMouseDown = false;
         _isDrawingStated = false;
+        _currentFreedraw = null;
     }
 
-
-    private async Task DrawPointAsync(double x, double y, double prevX, double prevY)
+    private async Task ClearCanvasAsync()
     {
-        await _context.BeginPathAsync();
+        await _context.SetFillStyleAsync("#1e1e1e");
+        await _context.FillRectAsync(0, 0, _width, _height);
+    }
 
-        await _context.MoveToAsync(_points[0].x, _points[0].y);
-        
-        for (var i = 1; i < _points.Count; i++)
+    public sealed class Freedraw : DrawingObject
+    {
+        private List<(double X, double Y)> _points;
+
+        public Freedraw(double x, double y) : base(x, y)
         {
-            var point = _points[i];
-            await _context.LineToAsync(point.x, point.y);
+            _points = new();
+            _points.Add((x, y));
         }
 
-    // await _context.ArcAsync(x, y, 3, 0, Math.PI * 2);
-    // await _context.LineToAsync(x - prevX, y - prevY);
-    // await _context.LineToAsync(x, y);
+        public override async Task DrawAsync(Canvas2DContext context)
+        {
+            if (_points.Count == 0)
+            {
+                return;
+            }
 
-    // await _context.ArcAsync(x - prevX, y - prevY, 3, 0, Math.PI * 2);
-    // await _context.ArcAsync(x, y, 3, 0, Math.PI * 2);
-    // await _context.StrokeAsync();
-        
-        //
-        // await _context.LineToAsync(x, y);
-        await _context.StrokeAsync();
-        await _context.ClosePathAsync();
+            await context.MoveToAsync(_points[0].X, _points[0].Y);
+
+            for (var i = 1; i < _points.Count; i++)
+            {
+                var point = _points[i];
+                await context.LineToAsync(point.X, point.Y);
+            }
+
+            await context.StrokeAsync();
+        }
+
+        public async Task AddPointAsync(Canvas2DContext context, double x, double y)
+        {
+            if (_points.Count == 1)
+            {
+                await context.MoveToAsync(_points[0].X, _points[0].Y);
+            }
+
+            await context.LineToAsync(x, y);
+            await context.StrokeAsync();
+
+            _points.Add((x, y));
+        }
     }
 
-    private async Task DrawRectDiamondAsync(double x, double y)
+    public sealed class Line : DrawingObject
     {
-        const double width = 50;
-        const double height = 50;
+        private double _x2;
+        private double _y2;
 
-        await _context.SetStrokeStyleAsync("#ffffff");
-        await _context.BeginPathAsync();
-        await _context.MoveToAsync(x - width / 2, y);
-        await _context.LineToAsync(x, y - height / 2);
-        await _context.LineToAsync(x + width / 2, y);
-        await _context.LineToAsync(x, y + height / 2);
-        await _context.LineToAsync(x - width / 2, y);
-        await _context.StrokeAsync();
+        public Line(double x, double y) : base(x, y)
+        {
+        }
+
+        public override Task DrawAsync(Canvas2DContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task SetEndAsync(Canvas2DContext context, double x, double y)
+        {
+            await context.SetStrokeStyleAsync("#ffffff");
+            await context.SetLineWidthAsync(3);
+            await context.BeginPathAsync();
+
+            await context.MoveToAsync(X, Y);
+            await context.LineToAsync(_x2, _y2);
+            await context.StrokeAsync();
+
+            _x2 = x;
+            _y2 = y;
+        }
     }
 
-    private async Task DrawCircleAsync(double x, double y)
+    public sealed class Rectangle : DrawingObject
     {
-        await _context.SetStrokeStyleAsync("#ffffff");
-        await _context.BeginPathAsync();
-        await _context.ArcAsync(x, y, 25, 0, Math.PI * 2);
-        await _context.StrokeAsync();
+        public Rectangle(double x, double y) : base(x, y)
+        {
+        }
+
+        public override async Task DrawAsync(Canvas2DContext context)
+        {
+            await context.SetStrokeStyleAsync("#ffffff");
+            await context.StrokeRectAsync(X, Y, Width, Height);
+        }
     }
 
-    private async Task DrawRectAsync(double x, double y)
+    public sealed class Circle : DrawingObject
     {
-        await _context.SetStrokeStyleAsync("#ffffff");
-        await _context.StrokeRectAsync(x, y, 50, 50);
+        public Circle(double x, double y) : base(x, y)
+        {
+        }
+
+        public override async Task DrawAsync(Canvas2DContext context)
+        {
+            await context.SetStrokeStyleAsync("#ffffff");
+            await context.BeginPathAsync();
+            await context.ArcAsync(X, Y, 25, 0, Math.PI * 2);
+            await context.StrokeAsync();
+        }
+    }
+
+    public sealed class Diamond : DrawingObject
+    {
+        public Diamond(double x, double y) : base(x, y)
+        {
+        }
+
+        public override async Task DrawAsync(Canvas2DContext context)
+        {
+            await context.SetStrokeStyleAsync("#ffffff");
+            await context.BeginPathAsync();
+            await context.MoveToAsync(X - Width / 2, Y);
+            await context.LineToAsync(X, Y - Height / 2);
+            await context.LineToAsync(X + Width / 2, Y);
+            await context.LineToAsync(X, Y + Height / 2);
+            await context.LineToAsync(X - Width / 2, Y);
+            await context.StrokeAsync();
+        }
+    }
+
+    public abstract class DrawingObject
+    {
+        protected DrawingObject(double x, double y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        protected double X { get; }
+        protected double Y { get; }
+
+        protected int Width => 50;
+        protected int Height => 50;
+
+        public abstract Task DrawAsync(Canvas2DContext context);
     }
 
 }
