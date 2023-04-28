@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\SketchSphere.UI.Render\SketchSphere.UI.Render.csproj" />
     <ProjectReference Include="..\Shared\SketchSphere.UI.Shared.csproj" />
   </ItemGroup>
 

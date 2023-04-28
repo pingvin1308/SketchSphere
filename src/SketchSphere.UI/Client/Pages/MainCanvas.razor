@@ -2,10 +2,16 @@
 @using Microsoft.AspNetCore.Components
 @using Blazor.Extensions.Canvas.Canvas2D
 @using Blazor.Extensions
+@using SketchSphere.UI.Render
 
 <PageTitle>MainCanvas</PageTitle>
 
-<button onclick="@ClearCanvasAsync">Cleara</button>
+<button onclick="@ClearAsync">Cleara</button>
+<button @onclick="() => SelectToolAsync(Tool.Rectangle)">Rectangle</button>
+<button @onclick="() => SelectToolAsync(Tool.Diamond)">Diamond</button>
+<button @onclick="() => SelectToolAsync(Tool.Circle)">Circle</button>
+<button @onclick="() => SelectToolAsync(Tool.Line)">Line</button>
+<button @onclick="() => SelectToolAsync(Tool.Draw)">Draw</button>
 
 <div
     onmousemove="@OnMouseMoveAsync"
@@ -30,8 +36,8 @@
 
     private List<DrawingObject> _drawingObjects = new();
 
-    private Freedraw? _currentFreedraw;
-    private Line? _currentLine;
+    private DrawingObject? _currentDrawingObject;
+    private Tool _currentTool;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -54,31 +60,45 @@
 
             if (!_isDrawingStated)
             {
-    // await _context.SetStrokeStyleAsync("#ffffff");
-    // await _context.SetLineWidthAsync(3);
-    // await _context.SetLineCapAsync(LineCap.Round);
-    // await _context.SetLineJoinAsync(LineJoin.Round);
-    // _isDrawingStated = true;
-    // await _context.BeginPathAsync();
+                await _context.SetStrokeStyleAsync("#ffffff");
+                await _context.SetLineWidthAsync(3);
+                await _context.SetLineCapAsync(LineCap.Round);
+                await _context.SetLineJoinAsync(LineJoin.Round);
+                _isDrawingStated = true;
             }
 
-            if (_currentFreedraw != null)
+            if (_currentDrawingObject != null)
             {
-    // await _currentFreedraw.AddPointAsync(_context, x, y);
+                Func<Task> initDrawingObjectAsync = _currentDrawingObject switch
+                {
+                    Circle circle =>  () => { return Task.CompletedTask; },
+                    Diamond diamond =>  () => { return Task.CompletedTask; },
+                    Freedraw freedraw => async () =>
+                    {
+                        await freedraw.AddPointAsync(_context, x, y);
+                        await freedraw.DrawAsync(_context);
+                    },
+                    Line line => async () =>
+                    {
+                        await ClearCanvasAsync();
+                        // await RenderAsync();
+                        await line.SetEndAsync(_context, x, y);
+                    },
+                    Rectangle rectangle =>  () => { return Task.CompletedTask; },
+                    _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
+                    };
+                await initDrawingObjectAsync();
             }
-    // _currentFreedraw?.DrawAsync(_context);
-
-            if (_currentLine != null)
-            {
-                await ClearCanvasAsync();
-                await _currentLine.SetEndAsync(_context, x, y);
-            }
+        }
+        else
+        {
+            await RenderAsync();
         }
     }
 
     private async Task RenderAsync()
     {
-    // await ClearCanvasAsync();
+        // await ClearCanvasAsync();
 
         foreach (var drawingObject in _drawingObjects)
         {
@@ -93,20 +113,25 @@
         var y = e.OffsetY;
         _isMouseDown = true;
 
-    // _drawingObjects.Add(new Rectangle(x, y));
-    // _drawingObjects.Add(new Circle(x + 100, y));
-    // _drawingObjects.Add(new Diamond(x, y));
-    // _currentFreedraw = new Freedraw(x, y);
-    // _drawingObjects.Add(_currentFreedraw);
-        _currentLine = new Line(x, y);
-        _drawingObjects.Add(_currentLine);
+        DrawingObject drawingObject = _currentTool switch
+        {
+            Tool.Rectangle => new Rectangle(x, y),
+            Tool.Diamond => new Diamond(x, y),
+            Tool.Circle => new Circle(x, y),
+            Tool.Line => new Line(x, y),
+            Tool.Draw => new Freedraw(x, y),
+            _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
+        };
+
+        _currentDrawingObject = drawingObject;
+        _drawingObjects.Add(drawingObject);
     }
 
     private async Task OnMouseUpAsync(MouseEventArgs e)
     {
         _isMouseDown = false;
         _isDrawingStated = false;
-        _currentFreedraw = null;
+        _currentDrawingObject = null;
     }
 
     private async Task ClearCanvasAsync()
@@ -115,139 +140,16 @@
         await _context.FillRectAsync(0, 0, _width, _height);
     }
 
-    public sealed class Freedraw : DrawingObject
+    private async Task ClearAsync()
     {
-        private List<(double X, double Y)> _points;
-
-        public Freedraw(double x, double y) : base(x, y)
-        {
-            _points = new();
-            _points.Add((x, y));
-        }
-
-        public override async Task DrawAsync(Canvas2DContext context)
-        {
-            if (_points.Count == 0)
-            {
-                return;
-            }
-
-            await context.MoveToAsync(_points[0].X, _points[0].Y);
-
-            for (var i = 1; i < _points.Count; i++)
-            {
-                var point = _points[i];
-                await context.LineToAsync(point.X, point.Y);
-            }
-
-            await context.StrokeAsync();
-        }
-
-        public async Task AddPointAsync(Canvas2DContext context, double x, double y)
-        {
-            if (_points.Count == 1)
-            {
-                await context.MoveToAsync(_points[0].X, _points[0].Y);
-            }
-
-            await context.LineToAsync(x, y);
-            await context.StrokeAsync();
-
-            _points.Add((x, y));
-        }
+        await ClearCanvasAsync();
+        _drawingObjects.Clear();
     }
 
-    public sealed class Line : DrawingObject
+    private Task SelectToolAsync(Tool selectedTool)
     {
-        private double _x2;
-        private double _y2;
-
-        public Line(double x, double y) : base(x, y)
-        {
-        }
-
-        public override Task DrawAsync(Canvas2DContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task SetEndAsync(Canvas2DContext context, double x, double y)
-        {
-            await context.SetStrokeStyleAsync("#ffffff");
-            await context.SetLineWidthAsync(3);
-            await context.BeginPathAsync();
-
-            await context.MoveToAsync(X, Y);
-            await context.LineToAsync(_x2, _y2);
-            await context.StrokeAsync();
-
-            _x2 = x;
-            _y2 = y;
-        }
+        Console.WriteLine($"Selected tool: {selectedTool}");
+        _currentTool = selectedTool;
+        return Task.CompletedTask;
     }
-
-    public sealed class Rectangle : DrawingObject
-    {
-        public Rectangle(double x, double y) : base(x, y)
-        {
-        }
-
-        public override async Task DrawAsync(Canvas2DContext context)
-        {
-            await context.SetStrokeStyleAsync("#ffffff");
-            await context.StrokeRectAsync(X, Y, Width, Height);
-        }
-    }
-
-    public sealed class Circle : DrawingObject
-    {
-        public Circle(double x, double y) : base(x, y)
-        {
-        }
-
-        public override async Task DrawAsync(Canvas2DContext context)
-        {
-            await context.SetStrokeStyleAsync("#ffffff");
-            await context.BeginPathAsync();
-            await context.ArcAsync(X, Y, 25, 0, Math.PI * 2);
-            await context.StrokeAsync();
-        }
-    }
-
-    public sealed class Diamond : DrawingObject
-    {
-        public Diamond(double x, double y) : base(x, y)
-        {
-        }
-
-        public override async Task DrawAsync(Canvas2DContext context)
-        {
-            await context.SetStrokeStyleAsync("#ffffff");
-            await context.BeginPathAsync();
-            await context.MoveToAsync(X - Width / 2, Y);
-            await context.LineToAsync(X, Y - Height / 2);
-            await context.LineToAsync(X + Width / 2, Y);
-            await context.LineToAsync(X, Y + Height / 2);
-            await context.LineToAsync(X - Width / 2, Y);
-            await context.StrokeAsync();
-        }
-    }
-
-    public abstract class DrawingObject
-    {
-        protected DrawingObject(double x, double y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        protected double X { get; }
-        protected double Y { get; }
-
-        protected int Width => 50;
-        protected int Height => 50;
-
-        public abstract Task DrawAsync(Canvas2DContext context);
-    }
-
 }
