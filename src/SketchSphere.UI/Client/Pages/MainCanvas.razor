@@ -47,8 +47,6 @@
         {
             await ClearCanvasAsync();
         }
-
-    // await RenderAsync();
     }
 
     private async Task OnMouseMoveAsync(MouseEventArgs e)
@@ -73,32 +71,21 @@
                 {
                     Circle circle =>  () => { return Task.CompletedTask; },
                     Diamond diamond =>  () => { return Task.CompletedTask; },
-                    Freedraw freedraw => async () =>
-                    {
-                        await freedraw.AddPointAsync(_context, x, y);
-                        await freedraw.DrawAsync(_context);
-                    },
-                    Line line => async () =>
-                    {
-                        await ClearCanvasAsync();
-                        // await RenderAsync();
-                        await line.SetEndAsync(_context, x, y);
-                    },
+                    Freedraw freedraw => async () => { await freedraw.AddPointAsync(x, y); },
+                    Line line => async () => { await line.SetEndAsync(x, y); },
                     Rectangle rectangle =>  () => { return Task.CompletedTask; },
                     _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
-                    };
+                };
                 await initDrawingObjectAsync();
             }
         }
-        else
-        {
-            await RenderAsync();
-        }
+
+        await RenderAsync();
     }
 
     private async Task RenderAsync()
     {
-        // await ClearCanvasAsync();
+        await ClearCanvasAsync();
 
         foreach (var drawingObject in _drawingObjects)
         {
@@ -152,4 +139,5 @@
         _currentTool = selectedTool;
         return Task.CompletedTask;
     }
+
 }

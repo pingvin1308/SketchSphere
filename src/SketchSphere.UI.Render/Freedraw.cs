@@ -18,6 +18,7 @@ public sealed class Freedraw : DrawingObject
         {
             return;
         }
+        await context.BeginPathAsync();
 
         await context.MoveToAsync(_points[0].X, _points[0].Y);
 
@@ -30,16 +31,8 @@ public sealed class Freedraw : DrawingObject
         await context.StrokeAsync();
     }
 
-    public async Task AddPointAsync(Canvas2DContext context, double x, double y)
+    public async Task AddPointAsync(double x, double y)
     {
-        if (_points.Count == 1)
-        {
-            await context.MoveToAsync(_points[0].X, _points[0].Y);
-        }
-
-        await context.LineToAsync(x, y);
-        await context.StrokeAsync();
-
         _points.Add((x, y));
     }
 }

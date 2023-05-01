@@ -19,10 +19,9 @@ public sealed class Line : DrawingObject
         await context.StrokeAsync();
     }
 
-    public async Task SetEndAsync(Canvas2DContext context, double x, double y)
+    public async Task SetEndAsync(double x, double y)
     {
         _x2 = x;
         _y2 = y;
-        await DrawAsync(context);
     }
 }
