@@ -1,15 +1,14 @@
 ﻿@page "/maincanvas"
 @using Microsoft.AspNetCore.Components
-@using Blazor.Extensions.Canvas.Canvas2D
-@using Blazor.Extensions
 @using SketchSphere.UI.Render
+@using Excubo.Blazor.Canvas.Contexts
 
 <PageTitle>MainCanvas</PageTitle>
 
 <button onclick="@ClearAsync">Cleara</button>
 <button @onclick="() => SelectToolAsync(Tool.Rectangle)">Rectangle</button>
 <button @onclick="() => SelectToolAsync(Tool.Diamond)">Diamond</button>
-<button @onclick="() => SelectToolAsync(Tool.Circle)">Circle</button>
+<button @onclick="() => SelectToolAsync(Tool.Ellipse)">Ellipse</button>
 <button @onclick="() => SelectToolAsync(Tool.Line)">Line</button>
 <button @onclick="() => SelectToolAsync(Tool.Draw)">Draw</button>
 
@@ -17,19 +16,19 @@
     onmousemove="@OnMouseMoveAsync"
     onmousedown="@OnMouseDownAsync"
     onmouseup="@OnMouseUpAsync">
-    <BECanvas
+    <Canvas
         Width="@_width"
         Height="@_height"
         @ref="_canvasReference">
-    </BECanvas>
+    </Canvas>
 </div>
 
 @code {
     private int _width = 500;
     private int _height = 500;
 
-    private Canvas2DContext _context;
-    private BECanvasComponent _canvasReference;
+    private Context2D _context;
+    private Canvas _canvasReference;
 
     private bool _isMouseDown;
     private bool _isDrawingStated;
@@ -41,10 +40,15 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _context = await _canvasReference.CreateCanvas2DAsync();
+        _context = await _canvasReference.GetContext2DAsync();
 
         if (firstRender)
         {
+            await _context.StrokeStyleAsync("#ffffff");
+            await _context.LineWidthAsync(5);
+            await _context.LineCapAsync(LineCap.Round);
+            await _context.LineJoinAsync(LineJoin.Round);
+
             await ClearCanvasAsync();
         }
     }
@@ -56,27 +60,30 @@
             var x = e.OffsetX;
             var y = e.OffsetY;
 
-            if (!_isDrawingStated)
-            {
-                await _context.SetStrokeStyleAsync("#ffffff");
-                await _context.SetLineWidthAsync(3);
-                await _context.SetLineCapAsync(LineCap.Round);
-                await _context.SetLineJoinAsync(LineJoin.Round);
-                _isDrawingStated = true;
-            }
-
             if (_currentDrawingObject != null)
             {
-                Func<Task> initDrawingObjectAsync = _currentDrawingObject switch
+                Action initDrawingObjectAsync = _currentDrawingObject switch
                 {
-                    Circle circle =>  () => { return Task.CompletedTask; },
-                    Diamond diamond =>  () => { return Task.CompletedTask; },
-                    Freedraw freedraw => async () => { await freedraw.AddPointAsync(x, y); },
-                    Line line => async () => { await line.SetEndAsync(x, y); },
-                    Rectangle rectangle =>  () => { return Task.CompletedTask; },
+                    Ellipse circle => () =>
+                    {
+                        circle.SetWidth(x);
+                        circle.SetHeight(y);
+                    },
+                    Diamond diamond =>  () =>
+                    {
+                        diamond.SetWidth(x);
+                        diamond.SetHeight(y);
+                    },
+                    Freedraw freedraw => () => { freedraw.AddPointAsync(x, y); },
+                    Line line => () => { line.SetEndAsync(x, y); },
+                    Rectangle rectangle =>  () =>
+                    {
+                        rectangle.SetWidth(x);
+                        rectangle.SetHeight(y);
+                    },
                     _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
-                };
-                await initDrawingObjectAsync();
+                    };
+                initDrawingObjectAsync();
             }
         }
 
@@ -104,11 +111,11 @@
         {
             Tool.Rectangle => new Rectangle(x, y),
             Tool.Diamond => new Diamond(x, y),
-            Tool.Circle => new Circle(x, y),
+            Tool.Ellipse => new Ellipse(x, y),
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
-        };
+            };
 
         _currentDrawingObject = drawingObject;
         _drawingObjects.Add(drawingObject);
@@ -123,7 +130,7 @@
 
     private async Task ClearCanvasAsync()
     {
-        await _context.SetFillStyleAsync("#1e1e1e");
+        await _context.FillStyleAsync("#1e1e1e");
         await _context.FillRectAsync(0, 0, _width, _height);
     }
 

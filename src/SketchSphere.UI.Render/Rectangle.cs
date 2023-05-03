@@ -1,4 +1,4 @@
-﻿using Blazor.Extensions.Canvas.Canvas2D;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
@@ -8,9 +8,9 @@ public sealed class Rectangle : DrawingObject
     {
     }
 
-    public override async Task DrawAsync(Canvas2DContext context)
+    public override async Task DrawAsync(Context2D context)
     {
-        await context.SetStrokeStyleAsync("#ffffff");
+        await context.StrokeStyleAsync("#ffffff");
         await context.StrokeRectAsync(X, Y, Width, Height);
     }
 }

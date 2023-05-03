@@ -1,4 +1,4 @@
-﻿using Blazor.Extensions.Canvas.Canvas2D;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
@@ -8,13 +8,37 @@ public abstract class DrawingObject
     {
         X = x;
         Y = y;
+        _width = 1;
+        _height = 1;
     }
 
     protected double X { get; }
     protected double Y { get; }
 
-    protected int Width => 50;
-    protected int Height => 50;
+    private int _width;
+    private int _height;
 
-    public abstract Task DrawAsync(Canvas2DContext context);
+    protected int Width
+    {
+        get => _width;
+        private set => _width = value;
+    }
+
+    protected int Height
+    {
+        get => _height;
+        private set => _height = value;
+    }
+
+    public abstract Task DrawAsync(Context2D context);
+
+    public void SetWidth(double x2)
+    {
+        Width = (int)(x2 - X);
+    }
+
+    public void SetHeight(double y2)
+    {
+        Height = (int)(y2 - Y);
+    }
 }

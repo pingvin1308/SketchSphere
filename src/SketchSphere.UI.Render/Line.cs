@@ -1,4 +1,4 @@
-﻿using Blazor.Extensions.Canvas.Canvas2D;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
@@ -11,7 +11,7 @@ public sealed class Line : DrawingObject
     {
     }
 
-    public override async Task DrawAsync(Canvas2DContext context)
+    public override async Task DrawAsync(Context2D context)
     {
         await context.BeginPathAsync();
         await context.MoveToAsync(X, Y);
@@ -19,7 +19,7 @@ public sealed class Line : DrawingObject
         await context.StrokeAsync();
     }
 
-    public async Task SetEndAsync(double x, double y)
+    public void SetEndAsync(double x, double y)
     {
         _x2 = x;
         _y2 = y;

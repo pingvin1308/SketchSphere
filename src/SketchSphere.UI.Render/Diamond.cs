@@ -1,4 +1,4 @@
-﻿using Blazor.Extensions.Canvas.Canvas2D;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
@@ -8,15 +8,16 @@ public sealed class Diamond : DrawingObject
     {
     }
 
-    public override async Task DrawAsync(Canvas2DContext context)
+    public override async Task DrawAsync(Context2D context)
     {
-        await context.SetStrokeStyleAsync("#ffffff");
         await context.BeginPathAsync();
-        await context.MoveToAsync(X - Width / 2, Y);
-        await context.LineToAsync(X, Y - Height / 2);
-        await context.LineToAsync(X + Width / 2, Y);
-        await context.LineToAsync(X, Y + Height / 2);
-        await context.LineToAsync(X - Width / 2, Y);
+
+        await context.MoveToAsync(X, Y + Height / 2.0);
+        await context.LineToAsync(X + Width / 2.0, Y);
+        await context.LineToAsync(X + Width, Y + Height / 2.0);
+        await context.LineToAsync(X + Width / 2.0, Y + Height);
+        await context.LineToAsync(X, Y + Height / 2.0);
+
         await context.StrokeAsync();
     }
 }

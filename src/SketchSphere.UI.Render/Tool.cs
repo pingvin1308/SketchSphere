@@ -4,7 +4,7 @@ public enum Tool
 {
     Rectangle,
     Diamond,
-    Circle,
+    Ellipse,
     Line,
     Draw
 }

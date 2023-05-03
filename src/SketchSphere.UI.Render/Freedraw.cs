@@ -1,4 +1,4 @@
-﻿using Blazor.Extensions.Canvas.Canvas2D;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
@@ -12,7 +12,7 @@ public sealed class Freedraw : DrawingObject
         _points.Add((x, y));
     }
 
-    public override async Task DrawAsync(Canvas2DContext context)
+    public override async Task DrawAsync(Context2D context)
     {
         if (_points.Count == 0)
         {
@@ -31,7 +31,7 @@ public sealed class Freedraw : DrawingObject
         await context.StrokeAsync();
     }
 
-    public async Task AddPointAsync(double x, double y)
+    public void AddPointAsync(double x, double y)
     {
         _points.Add((x, y));
     }
