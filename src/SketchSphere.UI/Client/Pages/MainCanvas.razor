@@ -6,6 +6,7 @@
 <PageTitle>MainCanvas</PageTitle>
 
 <button onclick="@ClearAsync">Cleara</button>
+<button @onclick="() => SelectToolAsync(Tool.Selection)">Selection</button>
 <button @onclick="() => SelectToolAsync(Tool.Rectangle)">Rectangle</button>
 <button @onclick="() => SelectToolAsync(Tool.Diamond)">Diamond</button>
 <button @onclick="() => SelectToolAsync(Tool.Ellipse)">Ellipse</button>
@@ -34,6 +35,7 @@
     private bool _isDrawingStated;
 
     private List<DrawingObject> _drawingObjects = new();
+    private Selection _selection = new Selection(0, 0);
 
     private DrawingObject? _currentDrawingObject;
     private Tool _currentTool;
@@ -85,6 +87,11 @@
                     };
                 initDrawingObjectAsync();
             }
+            
+            if(_selection.IsSelected)
+            {
+                _selection.Move(e.MovementX, e.MovementY);
+            }
         }
 
         await RenderAsync();
@@ -98,16 +105,24 @@
         {
             await drawingObject.DrawAsync(_context);
         }
+        await _selection.DrawAsync(_context);
     }
 
     private async Task OnMouseDownAsync(MouseEventArgs e)
     {
-        Console.WriteLine($"Click - X: {e.OffsetX} Y: {e.OffsetY}");
         var x = e.OffsetX;
         var y = e.OffsetY;
         _isMouseDown = true;
 
-        DrawingObject drawingObject = _currentTool switch
+        if (_currentTool == Tool.Selection)
+        {
+            await SetSelection(x, y);
+            return;
+        }
+        
+        await ClearSelection();
+
+        DrawingObject currentDrawingObject = _currentTool switch
         {
             Tool.Rectangle => new Rectangle(x, y),
             Tool.Diamond => new Diamond(x, y),
@@ -115,10 +130,34 @@
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
-            };
+        };
 
-        _currentDrawingObject = drawingObject;
-        _drawingObjects.Add(drawingObject);
+        _currentDrawingObject = currentDrawingObject;
+        _drawingObjects.Add(currentDrawingObject);
+    }
+
+    private async Task SetSelection(double x, double y)
+    {
+        var selectedObject = _drawingObjects
+            .FirstOrDefault(obj => obj.IsHit(x, y));
+        if (selectedObject != null)
+        {
+            _selection.Set(selectedObject);
+        }
+        else
+        {
+            await ClearSelection();
+        }
+    }
+    
+    private async Task ClearSelection()
+    {
+        if (_selection.IsSelected)
+        {
+            _selection.Clear();
+        }
+        
+        await RenderAsync();
     }
 
     private async Task OnMouseUpAsync(MouseEventArgs e)
@@ -140,11 +179,11 @@
         _drawingObjects.Clear();
     }
 
-    private Task SelectToolAsync(Tool selectedTool)
+    private async Task SelectToolAsync(Tool selectedTool)
     {
-        Console.WriteLine($"Selected tool: {selectedTool}");
+        await ClearSelection();
         _currentTool = selectedTool;
-        return Task.CompletedTask;
+        // return Task.CompletedTask;
     }
 
 }

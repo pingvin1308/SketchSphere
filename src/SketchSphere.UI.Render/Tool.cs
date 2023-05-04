@@ -2,9 +2,10 @@
 
 public enum Tool
 {
+    Selection,
     Rectangle,
     Diamond,
     Ellipse,
     Line,
-    Draw
+    Draw,
 }
