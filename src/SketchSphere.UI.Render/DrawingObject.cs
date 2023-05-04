@@ -42,14 +42,14 @@ public abstract class DrawingObject
         Height = (int)(y2 - Y);
     }
 
-    public bool IsHit(double x, double y)
+    public virtual bool IsHit(double x, double y)
     {
         return x >= X && x <= X + Width && y >= Y && y <= Y + Height;
     }
     
     public virtual void Move(double offsetX, double offsetY)
     {
-        X = offsetX;
-        Y = offsetY;
+        X += offsetX;
+        Y += offsetY;
     }
 }

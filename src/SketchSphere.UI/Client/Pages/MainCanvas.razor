@@ -35,7 +35,7 @@
     private bool _isDrawingStated;
 
     private List<DrawingObject> _drawingObjects = new();
-    private Selection _selection = new Selection(0, 0);
+    private Selection _selection = new(0, 0);
 
     private DrawingObject? _currentDrawingObject;
     private Tool _currentTool;
@@ -66,29 +66,19 @@
             {
                 Action initDrawingObjectAsync = _currentDrawingObject switch
                 {
-                    Ellipse circle => () =>
-                    {
-                        circle.SetWidth(x);
-                        circle.SetHeight(y);
-                    },
-                    Diamond diamond =>  () =>
-                    {
-                        diamond.SetWidth(x);
-                        diamond.SetHeight(y);
-                    },
                     Freedraw freedraw => () => { freedraw.AddPointAsync(x, y); },
                     Line line => () => { line.SetEndAsync(x, y); },
-                    Rectangle rectangle =>  () =>
+                    Rectangle or Ellipse or Diamond =>  () =>
                     {
-                        rectangle.SetWidth(x);
-                        rectangle.SetHeight(y);
+                        _currentDrawingObject.SetWidth(x);
+                        _currentDrawingObject.SetHeight(y);
                     },
                     _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
-                    };
+                };
                 initDrawingObjectAsync();
             }
             
-            if(_selection.IsSelected)
+            if (_selection.IsSelected)
             {
                 _selection.Move(e.MovementX, e.MovementY);
             }
@@ -105,7 +95,11 @@
         {
             await drawingObject.DrawAsync(_context);
         }
-        await _selection.DrawAsync(_context);
+
+        if (_selection.IsSelected)
+        {
+            await _selection.DrawAsync(_context);
+        }
     }
 
     private async Task OnMouseDownAsync(MouseEventArgs e)
@@ -119,8 +113,6 @@
             await SetSelection(x, y);
             return;
         }
-        
-        await ClearSelection();
 
         DrawingObject currentDrawingObject = _currentTool switch
         {
@@ -140,6 +132,7 @@
     {
         var selectedObject = _drawingObjects
             .FirstOrDefault(obj => obj.IsHit(x, y));
+
         if (selectedObject != null)
         {
             _selection.Set(selectedObject);
@@ -155,9 +148,8 @@
         if (_selection.IsSelected)
         {
             _selection.Clear();
+            await RenderAsync();
         }
-        
-        await RenderAsync();
     }
 
     private async Task OnMouseUpAsync(MouseEventArgs e)
@@ -183,7 +175,6 @@
     {
         await ClearSelection();
         _currentTool = selectedTool;
-        // return Task.CompletedTask;
     }
 
 }

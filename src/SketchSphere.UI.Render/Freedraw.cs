@@ -5,6 +5,11 @@ namespace SketchSphere.UI.Render;
 public sealed class Freedraw : DrawingObject
 {
     private List<(double X, double Y)> _points;
+    
+    public double MaxX => _points.Max(point => point.X);
+    public double MinX => _points.Min(point => point.X);
+    public double MaxY => _points.Max(point => point.Y);
+    public double MinY => _points.Min(point => point.Y);
 
     public Freedraw(double x, double y) : base(x, y)
     {
@@ -34,5 +39,19 @@ public sealed class Freedraw : DrawingObject
     public void AddPointAsync(double x, double y)
     {
         _points.Add((x, y));
+    }
+
+    public override bool IsHit(double x, double y)
+    {
+        return x >= MinX && x <= MaxX && y >= MinY && y <= MaxY;
+    }
+
+    public override void Move(double offsetX, double offsetY)
+    {
+        for (var i = 0; i < _points.Count; i++)
+        {
+            var point = _points[i];
+            _points[i] = (point.X + offsetX, point.Y + offsetY);
+        }
     }
 }
