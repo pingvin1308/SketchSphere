@@ -22,6 +22,8 @@ jobs:
         dotnet-version: 7.0.x
     - name: Restore dependencies
       run: dotnet restore SketchSphere.sln
+    - name: Restore wasm-tool
+      run: dotnet workload restore src/SketchSphere.UI/Client/SketchSphere.UI.Client.csproj
     - name: Build
       run: dotnet build SketchSphere.sln --no-restore
     - name: Test
