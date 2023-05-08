@@ -4,30 +4,28 @@ namespace SketchSphere.UI.Render;
 
 public class Selection : DrawingObject
 {
-    private DrawingObject[] _selectedObjects;
+    private DrawingObject? _selectedObject;
 
     public Selection(double x, double y) : base(x, y)
     {
-        _selectedObjects = Array.Empty<DrawingObject>();
     }
 
-    public bool IsSelected => _selectedObjects.Any();
+    public bool IsSelected => _selectedObject != null;
 
     public override async Task DrawAsync(Context2D context)
     {
         const int padding = 8;
 
-        var selectedObject = _selectedObjects.FirstOrDefault();
-        if (selectedObject != null)
+        if (_selectedObject != null)
         {
             await context.BeginPathAsync();
-            var previousStrokeStyle = await context.FillAndStrokeStyles.StrokeStyleAsync();
+            var previousStrokeStyle = await context.StrokeStyleAsync();
             var previousLineWidth = await context.LineWidthAsync();
 
             await context.LineWidthAsync(1);
             await context.StrokeStyleAsync("#00FFE8");
 
-            if (selectedObject is Freedraw freedraw)
+            if (_selectedObject is Freedraw freedraw)
             {
                 var width = freedraw.MaxX - freedraw.MinX;
                 var height = freedraw.MaxY - freedraw.MinY;
@@ -40,13 +38,13 @@ public class Selection : DrawingObject
             else
             {
                 await context.StrokeRectAsync(
-                    x: selectedObject.X - padding,
-                    y: selectedObject.Y - padding,
-                    width: selectedObject.Width + 2 * padding,
-                    height: selectedObject.Height + 2 * padding);
+                    x: _selectedObject.X - padding,
+                    y: _selectedObject.Y - padding,
+                    width: _selectedObject.Width + 2 * padding,
+                    height: _selectedObject.Height + 2 * padding);
             }
 
-            if (selectedObject is Line line)
+            if (_selectedObject is Line line)
             {
                 await context.StrokeRectAsync(
                     x: line.X2 - padding,
@@ -55,31 +53,29 @@ public class Selection : DrawingObject
                     height: line.Height + 2 * padding);
             }
 
-
             await context.StrokeStyleAsync(previousStrokeStyle);
             await context.LineWidthAsync(previousLineWidth);
             await context.ClosePathAsync();
         }
     }
 
-    public void Set(params DrawingObject[] drawingObjects)
+    public void Set(DrawingObject drawingObjects)
     {
-        _selectedObjects = drawingObjects;
+        _selectedObject = drawingObjects;
     }
 
     public void Clear()
     {
-        _selectedObjects = Array.Empty<DrawingObject>();
+        _selectedObject = null;
     }
 
     public override void Move(double offsetX, double offsetY)
     {
-        var selectedObject = _selectedObjects.FirstOrDefault();
-        if (selectedObject == null)
+        if (_selectedObject == null)
         {
             return;
         }
 
-        selectedObject.Move(offsetX, offsetY);
+        _selectedObject.Move(offsetX, offsetY);
     }
 }

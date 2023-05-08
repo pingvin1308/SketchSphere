@@ -4,6 +4,10 @@ namespace SketchSphere.UI.Render;
 
 public abstract class DrawingObject
 {
+    private Guid _id = Guid.NewGuid();
+    private int _width;
+    private int _height;
+    
     protected DrawingObject(double x, double y)
     {
         X = x;
@@ -14,9 +18,6 @@ public abstract class DrawingObject
 
     public double X { get; private set; }
     public double Y { get; private set; }
-
-    private int _width;
-    private int _height;
 
     public int Width
     {
@@ -32,16 +33,16 @@ public abstract class DrawingObject
 
     public abstract Task DrawAsync(Context2D context);
 
-    public void SetWidth(double x2)
+    public void CalcWidth(double x2)
     {
         Width = (int)(x2 - X);
     }
 
-    public void SetHeight(double y2)
+    public void CalcHeight(double y2)
     {
         Height = (int)(y2 - Y);
     }
-
+    
     public virtual bool IsHit(double x, double y)
     {
         return x >= X && x <= X + Width && y >= Y && y <= Y + Height;
@@ -51,5 +52,27 @@ public abstract class DrawingObject
     {
         X += offsetX;
         Y += offsetY;
+    }
+    
+    public virtual void Resize(double offsetX, double offsetY)
+    {
+        Width += (int)offsetX;
+        Height += (int)offsetY;
+    }
+    
+    public void SetPosition(double x, double y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is DrawingObject other && _id == other._id;
+    }
+    
+    public override int GetHashCode()
+    {
+        return _id.GetHashCode();
     }
 }

@@ -36,6 +36,7 @@
 
     private List<DrawingObject> _drawingObjects = new();
     private Selection _selection = new(0, 0);
+    private SelectionBox _selectionBox = new(0, 0);
 
     private DrawingObject? _currentDrawingObject;
     private Tool _currentTool;
@@ -46,60 +47,17 @@
 
         if (firstRender)
         {
-            await _context.StrokeStyleAsync("#ffffff");
-            await _context.LineWidthAsync(5);
-            await _context.LineCapAsync(LineCap.Round);
-            await _context.LineJoinAsync(LineJoin.Round);
-
+            await SetDefaultStyleSettings();
             await ClearCanvasAsync();
         }
     }
 
-    private async Task OnMouseMoveAsync(MouseEventArgs e)
+    private async Task SetDefaultStyleSettings()
     {
-        if (_isMouseDown)
-        {
-            var x = e.OffsetX;
-            var y = e.OffsetY;
-
-            if (_currentDrawingObject != null)
-            {
-                Action initDrawingObjectAsync = _currentDrawingObject switch
-                {
-                    Freedraw freedraw => () => { freedraw.AddPointAsync(x, y); },
-                    Line line => () => { line.SetEndAsync(x, y); },
-                    Rectangle or Ellipse or Diamond =>  () =>
-                    {
-                        _currentDrawingObject.SetWidth(x);
-                        _currentDrawingObject.SetHeight(y);
-                    },
-                    _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
-                };
-                initDrawingObjectAsync();
-            }
-            
-            if (_selection.IsSelected)
-            {
-                _selection.Move(e.MovementX, e.MovementY);
-            }
-        }
-
-        await RenderAsync();
-    }
-
-    private async Task RenderAsync()
-    {
-        await ClearCanvasAsync();
-
-        foreach (var drawingObject in _drawingObjects)
-        {
-            await drawingObject.DrawAsync(_context);
-        }
-
-        if (_selection.IsSelected)
-        {
-            await _selection.DrawAsync(_context);
-        }
+        await _context.StrokeStyleAsync("#ffffff");
+        await _context.LineWidthAsync(5);
+        await _context.LineCapAsync(LineCap.Round);
+        await _context.LineJoinAsync(LineJoin.Round);
     }
 
     private async Task OnMouseDownAsync(MouseEventArgs e)
@@ -110,7 +68,9 @@
 
         if (_currentTool == Tool.Selection)
         {
-            await SetSelection(x, y);
+            _selection.SetPosition(x, y);
+            _selectionBox.SetPosition(x, y);
+            await TryToggleSelection(x, y);
             return;
         }
 
@@ -128,27 +88,41 @@
         _drawingObjects.Add(currentDrawingObject);
     }
 
-    private async Task SetSelection(double x, double y)
+    private async Task OnMouseMoveAsync(MouseEventArgs e)
     {
-        var selectedObject = _drawingObjects
-            .FirstOrDefault(obj => obj.IsHit(x, y));
+        var x = e.OffsetX;
+        var y = e.OffsetY;
 
-        if (selectedObject != null)
+        if (_isMouseDown && _currentDrawingObject != null)
         {
-            _selection.Set(selectedObject);
+            Action initDrawingObjectAsync = _currentDrawingObject switch
+            {
+                Freedraw freedraw => () => { freedraw.AddPointAsync(x, y); },
+                Line line => () => { line.SetEndAsync(x, y); },
+                Rectangle or Ellipse or Diamond =>  () =>
+                {
+                    _currentDrawingObject.CalcWidth(x);
+                    _currentDrawingObject.CalcHeight(y);
+                },
+                _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
+            };
+            initDrawingObjectAsync();
         }
-        else
+
+        if (_isMouseDown && _selection.IsSelected)
         {
-            await ClearSelection();
+            _selection.Move(e.MovementX, e.MovementY);
         }
-    }
-    
-    private async Task ClearSelection()
-    {
-        if (_selection.IsSelected)
+
+        await RenderAsync();
+
+        if (_isMouseDown && _currentTool == Tool.Selection && !_selection.IsSelected)
         {
-            _selection.Clear();
-            await RenderAsync();
+            _selectionBox.CalcWidth(x);
+            _selectionBox.CalcHeight(y);
+
+            await _selectionBox.DrawAsync(_context);
+            _selectionBox.AddIntersected(_drawingObjects);
         }
     }
 
@@ -157,6 +131,56 @@
         _isMouseDown = false;
         _isDrawingStated = false;
         _currentDrawingObject = null;
+    }
+
+    private async Task RenderAsync()
+    {
+        await ClearCanvasAsync();
+
+        foreach (var drawingObject in _drawingObjects)
+        {
+            await drawingObject.DrawAsync(_context);
+        }
+
+        if (_selection.IsSelected)
+        {
+            await _selection.DrawAsync(_context);
+        }
+
+        if (_selectionBox.IsSelected)
+        {
+            await _selectionBox.DrawAsync(_context);
+        }
+    }
+
+    private async Task<bool> TryToggleSelection(double x, double y)
+    {
+        var selectedObject = _drawingObjects
+            .FirstOrDefault(obj => obj.IsHit(x, y));
+
+        if (selectedObject != null)
+        {
+            _selection.Set(selectedObject);
+            return true;
+        }
+
+        await ClearSelection();
+        return false;
+    }
+
+    private async Task ClearSelection()
+    {
+        if (_selection.IsSelected)
+        {
+            _selection.Clear();
+            await RenderAsync();
+        }
+        
+        if (_selectionBox.IsSelected)
+        {
+            _selectionBox.Clear();
+            await RenderAsync();
+        }
     }
 
     private async Task ClearCanvasAsync()
