@@ -6,6 +6,12 @@ public class SelectionBox : DrawingObject
 {
     private readonly HashSet<DrawingObject> _selectedObjects;
 
+    public double X1 => Math.Min(Transform.X1, Transform.X2);
+    public double Y1 => Math.Min(Transform.Y1, Transform.Y2);
+
+    public double X2 => Math.Max(Transform.X1, Transform.X2);
+    public double Y2 => Math.Max(Transform.Y1, Transform.Y2);
+
     public SelectionBox(double x, double y) : base(x, y)
     {
         _selectedObjects = new HashSet<DrawingObject>();
@@ -26,22 +32,58 @@ public class SelectionBox : DrawingObject
 
             const int padding = 8;
 
-            var sortedObjects = _selectedObjects
-                .Select(selectedObject => (selectedObject.X, selectedObject.Y))
-                .ToArray();
+            var minX = _selectedObjects
+                .Select(selectedObject =>
+                {
+                    return selectedObject switch
+                    {
+                        Freedraw freedraw => freedraw.Points.Min(point => point.X),
+                        Line line => Math.Min(line.Transform.X1, line.Transform.X2),
+                        _ => selectedObject.Transform.X1
+                    };
+                })
+                .Order()
+                .First();
 
             var maxX = _selectedObjects
-                .Select(selectedObject => selectedObject.X + selectedObject.Width)
+                .Select(selectedObject =>
+                {
+                    return selectedObject switch
+                    {
+                        Freedraw freedraw => freedraw.Points.Max(point => point.X),
+                        Line line => Math.Max(line.Transform.X1, line.Transform.X2),
+                        _ => selectedObject.Transform.X2
+                    };
+                })
                 .OrderDescending()
                 .First();
+            
+            var minY = _selectedObjects
+                .Select(selectedObject =>
+                {
+                    return selectedObject switch
+                    {
+                        Freedraw freedraw => freedraw.Points.Min(point => point.Y),
+                        Line line => Math.Min(line.Transform.Y1, line.Transform.Y2),
+                        _ => selectedObject.Transform.Y1
+                    };
+                })
+                .Order()
+                .First();
+
 
             var maxY = _selectedObjects
-                .Select(selectedObject => selectedObject.Y + selectedObject.Height)
+                .Select(selectedObject =>
+                {
+                    return selectedObject switch
+                    {
+                        Freedraw freedraw => freedraw.Points.Max(point => point.Y),
+                        Line line => Math.Max(line.Transform.Y1, line.Transform.Y2),
+                        _ => selectedObject.Transform.Y2
+                    };
+                })
                 .OrderDescending()
                 .First();
-
-            var minX = sortedObjects.Min(point => point.X);
-            var minY = sortedObjects.Min(point => point.Y);
 
             var width = maxX - minX;
             var height = maxY - minY;
@@ -53,18 +95,23 @@ public class SelectionBox : DrawingObject
         }
         else
         {
-            await context.StrokeRectAsync(X, Y, Width, Height);
+            await context.StrokeRectAsync(X1, Y1, Transform.Width, Transform.Height);
         }
 
         await context.StrokeStyleAsync(previousStrokeStyle);
         await context.LineWidthAsync(previousLineWidth);
     }
 
+    public override bool IsHit(double x, double y)
+    {
+        return x >= X1 && x <= X2 && y >= Y1 && y <= Y2;
+    }
+
     public void AddIntersected(IReadOnlyCollection<DrawingObject> drawingObjects)
     {
         foreach (var drawingObject in drawingObjects)
         {
-            if (IsHit(drawingObject.X, drawingObject.Y))
+            if (IsHit(drawingObject.Transform.X1, drawingObject.Transform.Y1))
             {
                 var result = _selectedObjects.Add(drawingObject);
                 if (result)
@@ -73,6 +120,15 @@ public class SelectionBox : DrawingObject
                 }
             }
         }
+    }
+
+    public override void Move(double offsetX, double offsetY)
+    {
+        foreach (var selectedObject in _selectedObjects)
+        {
+            selectedObject.Move(offsetX, offsetY);
+        }
+        // base.Move(offsetX, offsetY);
     }
 
     public void Clear()

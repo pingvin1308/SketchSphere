@@ -1,4 +1,4 @@
-﻿@page "/maincanvas"
+﻿@page "/"
 @using Microsoft.AspNetCore.Components
 @using SketchSphere.UI.Render
 @using Excubo.Blazor.Canvas.Contexts
@@ -25,8 +25,8 @@
 </div>
 
 @code {
-    private int _width = 500;
-    private int _height = 500;
+    private int _width = 1920;
+    private int _height = 1080;
 
     private Context2D _context;
     private Canvas _canvasReference;
@@ -35,8 +35,8 @@
     private bool _isDrawingStated;
 
     private List<DrawingObject> _drawingObjects = new();
-    private Selection _selection = new(0, 0);
-    private SelectionBox _selectionBox = new(0, 0);
+    private Selection? _selection = null;
+    private SelectionBox? _selectionBox = null;
 
     private DrawingObject? _currentDrawingObject;
     private Tool _currentTool;
@@ -66,10 +66,8 @@
         var y = e.OffsetY;
         _isMouseDown = true;
 
-        if (_currentTool == Tool.Selection)
+        if (_currentTool == Tool.Selection && _selection != null)
         {
-            _selection.SetPosition(x, y);
-            _selectionBox.SetPosition(x, y);
             await TryToggleSelection(x, y);
             return;
         }
@@ -81,8 +79,15 @@
             Tool.Ellipse => new Ellipse(x, y),
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
+            Tool.Selection when _selection == null => new Selection(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
         };
+
+        if (currentDrawingObject is Selection selection)
+        {
+            _selection = selection;
+            return;
+        }
 
         _currentDrawingObject = currentDrawingObject;
         _drawingObjects.Add(currentDrawingObject);
@@ -97,29 +102,32 @@
         {
             Action initDrawingObjectAsync = _currentDrawingObject switch
             {
-                Freedraw freedraw => () => { freedraw.AddPointAsync(x, y); },
-                Line line => () => { line.SetEndAsync(x, y); },
-                Rectangle or Ellipse or Diamond =>  () =>
+                Freedraw freedraw => () => { freedraw.SetEnd(x, y); },
+                Rectangle or Ellipse or Diamond or Line => () =>
                 {
-                    _currentDrawingObject.CalcWidth(x);
-                    _currentDrawingObject.CalcHeight(y);
+                    _currentDrawingObject.SetEnd(x, y);
                 },
                 _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
             };
             initDrawingObjectAsync();
         }
 
-        if (_isMouseDown && _selection.IsSelected)
+        if (_isMouseDown && _selection?.IsSelected == true)
         {
             _selection.Move(e.MovementX, e.MovementY);
+        }
+        
+        if (_isMouseDown && _selectionBox?.IsSelected == true)
+        {
+            _selectionBox.Move(e.MovementX, e.MovementY);
         }
 
         await RenderAsync();
 
-        if (_isMouseDown && _currentTool == Tool.Selection && !_selection.IsSelected)
+        if (_isMouseDown && _currentTool == Tool.Selection && _selection?.IsSelected != true)
         {
-            _selectionBox.CalcWidth(x);
-            _selectionBox.CalcHeight(y);
+            _selectionBox ??= new SelectionBox(x, y);
+            _selectionBox.SetEnd(x, y);
 
             await _selectionBox.DrawAsync(_context);
             _selectionBox.AddIntersected(_drawingObjects);
@@ -142,41 +150,40 @@
             await drawingObject.DrawAsync(_context);
         }
 
-        if (_selection.IsSelected)
+        if (_selection?.IsSelected == true)
         {
             await _selection.DrawAsync(_context);
         }
 
-        if (_selectionBox.IsSelected)
+        if (_selectionBox?.IsSelected == true)
         {
             await _selectionBox.DrawAsync(_context);
         }
     }
 
-    private async Task<bool> TryToggleSelection(double x, double y)
+    private async Task TryToggleSelection(double x, double y)
     {
         var selectedObject = _drawingObjects
             .FirstOrDefault(obj => obj.IsHit(x, y));
 
         if (selectedObject != null)
         {
-            _selection.Set(selectedObject);
-            return true;
+            _selection?.Set(selectedObject);
+            return;
         }
 
         await ClearSelection();
-        return false;
     }
 
     private async Task ClearSelection()
     {
-        if (_selection.IsSelected)
+        if (_selection?.IsSelected == true)
         {
             _selection.Clear();
             await RenderAsync();
         }
         
-        if (_selectionBox.IsSelected)
+        if (_selectionBox?.IsSelected == true)
         {
             _selectionBox.Clear();
             await RenderAsync();
@@ -185,7 +192,7 @@
 
     private async Task ClearCanvasAsync()
     {
-        await _context.FillStyleAsync("#1e1e1e");
+        await _context.FillStyleAsync("#8B0000");
         await _context.FillRectAsync(0, 0, _width, _height);
     }
 

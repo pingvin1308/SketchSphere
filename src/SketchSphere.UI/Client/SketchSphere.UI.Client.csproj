@@ -11,12 +11,15 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.1" PrivateAssets="all" />
     <PackageReference Include="Excubo.Blazor.Canvas" Version="3.2.20" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\SketchSphere.UI.Render\SketchSphere.UI.Render.csproj" />
     <ProjectReference Include="..\Shared\SketchSphere.UI.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Pages\Index.razor" />
   </ItemGroup>
 
 </Project>

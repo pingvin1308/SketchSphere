@@ -1,13 +1,9 @@
-﻿using System.Numerics;
-using Excubo.Blazor.Canvas.Contexts;
+﻿using Excubo.Blazor.Canvas.Contexts;
 
 namespace SketchSphere.UI.Render;
 
 public sealed class Line : DrawingObject
 {
-    public double X2 { get; private set; }
-    public double Y2 { get; private set; }
-
     public Line(double x, double y) : base(x, y)
     {
     }
@@ -15,8 +11,8 @@ public sealed class Line : DrawingObject
     public override async Task DrawAsync(Context2D context)
     {
         await context.BeginPathAsync();
-        await context.MoveToAsync(X, Y);
-        await context.LineToAsync(X2, Y2);
+        await context.MoveToAsync(Transform.X1, Transform.Y1);
+        await context.LineToAsync(Transform.X2, Transform.Y2);
         await context.StrokeAsync();
         await context.ClosePathAsync();
     }
@@ -29,28 +25,15 @@ public sealed class Line : DrawingObject
     /// <returns></returns>
     public override bool IsHit(double x, double y)
     {
-        var x1 = X;
-        var y1 = Y;
-        var x2 = X2;
-        var y2 = Y2;
+        var x1 = Transform.X1;
+        var y1 = Transform.Y1;
+        var x2 = Transform.X2;
+        var y2 = Transform.Y2;
 
         var step1 = Math.Abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1));
         var step2 = Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
         var result = step1 / step2;
 
         return result < 5;
-    }
-
-    public void SetEndAsync(double x, double y)
-    {
-        X2 = x;
-        Y2 = y;
-    }
-
-    public override void Move(double offsetX, double offsetY)
-    {
-        X2 += offsetX;
-        Y2 += offsetY;
-        base.Move(offsetX, offsetY);
     }
 }

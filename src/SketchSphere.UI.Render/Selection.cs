@@ -35,28 +35,40 @@ public class Selection : DrawingObject
                     width: width + 2 * padding,
                     height: height + 2 * padding);
             }
+            else if (_selectedObject is Line line)
+            {
+                const double width = 10;
+                
+                await context.StrokeRectAsync(
+                    x: line.Transform.X1 - padding,
+                    y: line.Transform.Y1 - padding,
+                    width: width + padding,
+                    height: width + padding);
+                
+                await context.StrokeRectAsync(
+                    x: line.Transform.X2 - padding,
+                    y: line.Transform.Y2 - padding,
+                    width: width + padding,
+                    height: width + padding);
+            }
             else
             {
                 await context.StrokeRectAsync(
-                    x: _selectedObject.X - padding,
-                    y: _selectedObject.Y - padding,
-                    width: _selectedObject.Width + 2 * padding,
-                    height: _selectedObject.Height + 2 * padding);
-            }
-
-            if (_selectedObject is Line line)
-            {
-                await context.StrokeRectAsync(
-                    x: line.X2 - padding,
-                    y: line.Y2 - padding,
-                    width: line.Width + 2 * padding,
-                    height: line.Height + 2 * padding);
+                    x: _selectedObject.Transform.X1 - padding,
+                    y: _selectedObject.Transform.Y1 - padding,
+                    width: _selectedObject.Transform.Width + 2 * padding,
+                    height: _selectedObject.Transform.Height + 2 * padding);
             }
 
             await context.StrokeStyleAsync(previousStrokeStyle);
             await context.LineWidthAsync(previousLineWidth);
             await context.ClosePathAsync();
         }
+    }
+
+    public override bool IsHit(double x, double y)
+    {
+        return x >= Transform.X1 && x <= Transform.X2 && y >= Transform.Y1 && y <= Transform.Y2;
     }
 
     public void Set(DrawingObject drawingObjects)

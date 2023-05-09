@@ -16,6 +16,8 @@ public sealed class Freedraw : DrawingObject
         _points = new();
         _points.Add((x, y));
     }
+    
+    public List<(double X, double Y)> Points => _points;
 
     public override async Task DrawAsync(Context2D context)
     {
@@ -36,9 +38,10 @@ public sealed class Freedraw : DrawingObject
         await context.StrokeAsync();
     }
 
-    public void AddPointAsync(double x, double y)
+    public override void SetEnd(double x, double y)
     {
         _points.Add((x, y));
+        base.SetEnd(x, y);
     }
 
     public override bool IsHit(double x, double y)
@@ -53,5 +56,7 @@ public sealed class Freedraw : DrawingObject
             var point = _points[i];
             _points[i] = (point.X + offsetX, point.Y + offsetY);
         }
+
+        base.Move(offsetX, offsetY);
     }
 }

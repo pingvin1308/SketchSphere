@@ -4,66 +4,25 @@ namespace SketchSphere.UI.Render;
 
 public abstract class DrawingObject
 {
-    private Guid _id = Guid.NewGuid();
-    private int _width;
-    private int _height;
-    
-    protected DrawingObject(double x, double y)
+    private readonly Guid _id = Guid.NewGuid();
+    public Transform Transform { get; }
+
+    public DrawingObject(double x, double y)
     {
-        X = x;
-        Y = y;
-        _width = 1;
-        _height = 1;
+        Transform = new Transform(x, y);
     }
-
-    public double X { get; private set; }
-    public double Y { get; private set; }
-
-    public int Width
-    {
-        get => _width;
-        private set => _width = value;
-    }
-
-    public int Height
-    {
-        get => _height;
-        private set => _height = value;
-    }
-
+  
     public abstract Task DrawAsync(Context2D context);
+    public abstract bool IsHit(double x, double y);
 
-    public void CalcWidth(double x2)
+    public virtual void SetEnd(double x, double y)
     {
-        Width = (int)(x2 - X);
+        Transform.SetEnd(x, y);
     }
 
-    public void CalcHeight(double y2)
-    {
-        Height = (int)(y2 - Y);
-    }
-    
-    public virtual bool IsHit(double x, double y)
-    {
-        return x >= X && x <= X + Width && y >= Y && y <= Y + Height;
-    }
-    
     public virtual void Move(double offsetX, double offsetY)
     {
-        X += offsetX;
-        Y += offsetY;
-    }
-    
-    public virtual void Resize(double offsetX, double offsetY)
-    {
-        Width += (int)offsetX;
-        Height += (int)offsetY;
-    }
-    
-    public void SetPosition(double x, double y)
-    {
-        X = x;
-        Y = y;
+        Transform.Move(offsetX, offsetY);
     }
 
     public override bool Equals(object? obj)
