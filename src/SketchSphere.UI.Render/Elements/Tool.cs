@@ -1,4 +1,4 @@
-﻿namespace SketchSphere.UI.Render;
+﻿namespace SketchSphere.UI.Render.Elements;
 
 public enum Tool
 {

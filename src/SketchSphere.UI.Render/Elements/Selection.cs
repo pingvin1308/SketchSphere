@@ -1,6 +1,6 @@
 ﻿using Excubo.Blazor.Canvas.Contexts;
 
-namespace SketchSphere.UI.Render;
+namespace SketchSphere.UI.Render.Elements;
 
 public class Selection : DrawingObject
 {
@@ -18,10 +18,9 @@ public class Selection : DrawingObject
 
         if (_selectedObject != null)
         {
-            await context.BeginPathAsync();
-            var previousStrokeStyle = await context.StrokeStyleAsync();
-            var previousLineWidth = await context.LineWidthAsync();
+            await context.SaveAsync();
 
+            await context.BeginPathAsync();
             await context.LineWidthAsync(1);
             await context.StrokeStyleAsync("#00FFE8");
 
@@ -60,9 +59,8 @@ public class Selection : DrawingObject
                     height: _selectedObject.Transform.Height + 2 * padding);
             }
 
-            await context.StrokeStyleAsync(previousStrokeStyle);
-            await context.LineWidthAsync(previousLineWidth);
             await context.ClosePathAsync();
+            await context.RestoreAsync();
         }
     }
 

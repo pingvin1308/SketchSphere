@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components
 @using SketchSphere.UI.Render
 @using Excubo.Blazor.Canvas.Contexts
+@using SketchSphere.UI.Render.Elements
 
 <PageTitle>MainCanvas</PageTitle>
 
@@ -66,9 +67,23 @@
         var y = e.OffsetY;
         _isMouseDown = true;
 
-        if (_currentTool == Tool.Selection && _selection != null)
+        if (_currentTool == Tool.Selection)
         {
-            await TryToggleSelection(x, y);
+            if (_selectionBox?.IsSelectedAndFinished == true)
+            {
+                if (_selectionBox?.IsHit(x, y) != false)
+                {
+                    return;
+                }
+
+                await ClearSelection();
+                Console.WriteLine("Clear selection");
+            }
+            else
+            {
+                await TryToggleSelection(x, y);
+            }
+
             return;
         }
 
@@ -79,16 +94,9 @@
             Tool.Ellipse => new Ellipse(x, y),
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
-            Tool.Selection when _selection == null => new Selection(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
         };
-
-        if (currentDrawingObject is Selection selection)
-        {
-            _selection = selection;
-            return;
-        }
-
+        
         _currentDrawingObject = currentDrawingObject;
         _drawingObjects.Add(currentDrawingObject);
     }
@@ -112,19 +120,24 @@
             initDrawingObjectAsync();
         }
 
-        if (_isMouseDown && _selection?.IsSelected == true)
+        if (_isMouseDown && _currentTool == Tool.Selection)
         {
-            _selection.Move(e.MovementX, e.MovementY);
-        }
-        
-        if (_isMouseDown && _selectionBox?.IsSelected == true)
-        {
-            _selectionBox.Move(e.MovementX, e.MovementY);
+            if (_selectionBox?.IsSelectedAndFinished == true)
+            {
+                _selectionBox.Move(e.MovementX, e.MovementY);
+            }
+            else if (_selection?.IsSelected == true)
+            {
+                _selection.Move(e.MovementX, e.MovementY);
+            }
         }
 
         await RenderAsync();
 
-        if (_isMouseDown && _currentTool == Tool.Selection && _selection?.IsSelected != true)
+        if (_isMouseDown 
+            && _currentTool == Tool.Selection
+            && (_selection == null || _selection?.IsSelected == false)
+            && (_selectionBox == null || _selectionBox?.IsSelectedAndFinished == false))
         {
             _selectionBox ??= new SelectionBox(x, y);
             _selectionBox.SetEnd(x, y);
@@ -139,6 +152,16 @@
         _isMouseDown = false;
         _isDrawingStated = false;
         _currentDrawingObject = null;
+
+        if (_selectionBox?.IsSelected == true)
+        {
+            _selectionBox?.FinishDrawing();
+        }
+        
+        if (_selectionBox?.IsSelectedAndFinished == false)
+        {
+            _selectionBox = null;
+        }
     }
 
     private async Task RenderAsync()
@@ -154,8 +177,7 @@
         {
             await _selection.DrawAsync(_context);
         }
-
-        if (_selectionBox?.IsSelected == true)
+        else if (_selectionBox?.IsSelectedAndFinished == true)
         {
             await _selectionBox.DrawAsync(_context);
         }
@@ -168,7 +190,8 @@
 
         if (selectedObject != null)
         {
-            _selection?.Set(selectedObject);
+            _selection = new Selection(x, y);
+            _selection.Set(selectedObject);
             return;
         }
 
@@ -180,19 +203,21 @@
         if (_selection?.IsSelected == true)
         {
             _selection.Clear();
+            _selection = null;
             await RenderAsync();
         }
         
-        if (_selectionBox?.IsSelected == true)
+        if (_selectionBox?.IsSelectedAndFinished == true)
         {
             _selectionBox.Clear();
+            _selectionBox = null;
             await RenderAsync();
         }
     }
 
     private async Task ClearCanvasAsync()
     {
-        await _context.FillStyleAsync("#8B0000");
+        await _context.FillStyleAsync("#1e1e1e");
         await _context.FillRectAsync(0, 0, _width, _height);
     }
 
@@ -207,5 +232,4 @@
         await ClearSelection();
         _currentTool = selectedTool;
     }
-
 }

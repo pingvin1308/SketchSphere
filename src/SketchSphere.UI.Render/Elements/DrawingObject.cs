@@ -1,6 +1,7 @@
 ﻿using Excubo.Blazor.Canvas.Contexts;
+using SketchSphere.UI.Render.Elements.Components;
 
-namespace SketchSphere.UI.Render;
+namespace SketchSphere.UI.Render.Elements;
 
 public abstract class DrawingObject
 {

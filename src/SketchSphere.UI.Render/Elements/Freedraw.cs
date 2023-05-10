@@ -1,6 +1,6 @@
 ﻿using Excubo.Blazor.Canvas.Contexts;
 
-namespace SketchSphere.UI.Render;
+namespace SketchSphere.UI.Render.Elements;
 
 public sealed class Freedraw : DrawingObject
 {
