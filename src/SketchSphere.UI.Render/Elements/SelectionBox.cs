@@ -51,6 +51,11 @@ public class SelectionBox : DrawingObject
         await context.RestoreAsync();
     }
 
+    public override bool IsHit(double x, double y)
+    {
+        return x >= X1 && x <= X2 && y >= Y1 && y <= Y2;
+    }
+
     public void FinishDrawing()
     {
         _isFinished = true;
@@ -59,18 +64,33 @@ public class SelectionBox : DrawingObject
         Transform.SetEnd(maxX, maxY);
     }
 
-    public override bool IsHit(double x, double y)
+    private bool IsHit(double x1, double y1, double x2, double y2)
     {
-        return x >= X1 && y >= Y1 && x <= X2 && y <= Y2;
+        return X1 <= x1 && Y1 <= y1 && X2 >= x2 && Y2 >= y2;
     }
 
-    public void AddIntersected(IReadOnlyCollection<DrawingObject> drawingObjects)
+    /// <summary>
+    /// If the selection box hits a drawing object, it is added to the selection.
+    /// Else it is removed from the selection.
+    /// </summary>
+    /// <param name="drawingObjects">The list of drawing objects.</param>
+    public void ToggleSelected(IReadOnlyCollection<DrawingObject> drawingObjects)
     {
         foreach (var drawingObject in drawingObjects)
         {
-            if (IsHit(drawingObject.Transform.X1, drawingObject.Transform.Y1))
+            var isHit = IsHit(
+                x1: drawingObject.Transform.X1, 
+                y1: drawingObject.Transform.Y1,
+                x2: drawingObject.Transform.X2,
+                y2: drawingObject.Transform.Y2);
+            
+            if (isHit)
             {
                 _selectedObjects.Add(drawingObject);
+            }
+            else
+            {
+                _selectedObjects.Remove(drawingObject);
             }
         }
     }
