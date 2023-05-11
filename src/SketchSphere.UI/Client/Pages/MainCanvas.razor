@@ -1,18 +1,21 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Components
-@using SketchSphere.UI.Render
 @using Excubo.Blazor.Canvas.Contexts
 @using SketchSphere.UI.Render.Elements
 
 <PageTitle>MainCanvas</PageTitle>
 
 <button onclick="@ClearAsync">Cleara</button>
+<button onclick="@ClearAsync">Srul</button>
 <button @onclick="() => SelectToolAsync(Tool.Selection)">Selection</button>
 <button @onclick="() => SelectToolAsync(Tool.Rectangle)">Rectangle</button>
 <button @onclick="() => SelectToolAsync(Tool.Diamond)">Diamond</button>
 <button @onclick="() => SelectToolAsync(Tool.Ellipse)">Ellipse</button>
 <button @onclick="() => SelectToolAsync(Tool.Line)">Line</button>
 <button @onclick="() => SelectToolAsync(Tool.Draw)">Draw</button>
+<button @onclick="() => SelectToolAsync(Tool.Move)">Move</button>
+<button @onclick="() => ZoomIn()">zum +</button>
+<button @onclick="() => ZoomOut()">zum -</button>
 
 <div
     onmousemove="@OnMouseMoveAsync"
@@ -42,6 +45,10 @@
     private DrawingObject? _currentDrawingObject;
     private Tool _currentTool;
 
+    private double _globalX = 0;
+    private double _globalY = 0;
+    private double _scale = 1;
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         _context = await _canvasReference.GetContext2DAsync();
@@ -60,12 +67,44 @@
         await _context.LineCapAsync(LineCap.Round);
         await _context.LineJoinAsync(LineJoin.Round);
     }
+    
+    private async Task ZoomIn()
+    {
+        await _context.TransformAsync(
+            horizontal_scale: 1.05, 
+            vertical_skewing: 0, 
+            horizontal_skewing: 0, 
+            vertical_scaling: 1.05, 
+            horizontal_translation: 0, 
+            vertical_translation: 0);
+
+        await RenderAsync();
+    }
+
+    private async Task ZoomOut()
+    {
+        await _context.TransformAsync(
+            horizontal_scale: 0.95, 
+            vertical_skewing: 0, 
+            horizontal_skewing: 0, 
+            vertical_scaling: 0.95, 
+            horizontal_translation: 0, 
+            vertical_translation: 0);
+
+        await RenderAsync();
+    }
 
     private async Task OnMouseDownAsync(MouseEventArgs e)
     {
-        var x = e.OffsetX;
-        var y = e.OffsetY;
         _isMouseDown = true;
+
+        if (_currentTool == Tool.Move)
+        {
+            return;
+        }
+        
+        var x = _globalX + e.OffsetX;
+        var y = _globalY + e.OffsetY;
 
         if (_currentTool == Tool.Selection)
         {
@@ -103,8 +142,22 @@
 
     private async Task OnMouseMoveAsync(MouseEventArgs e)
     {
-        var x = e.OffsetX;
-        var y = e.OffsetY;
+        var x = _globalX + e.OffsetX;
+        var y = _globalY + e.OffsetY;
+        
+        if (_isMouseDown && _currentTool == Tool.Move)
+        {
+            _globalX -= e.MovementX;
+            _globalY -= e.MovementY;
+            
+            await _context.TransformAsync(
+                horizontal_scale: 1, 
+                vertical_skewing: 0, 
+                horizontal_skewing: 0, 
+                vertical_scaling: 1, 
+                horizontal_translation: e.MovementX, 
+                vertical_translation: e.MovementY);
+        }
 
         if (_isMouseDown && _currentDrawingObject != null)
         {
@@ -218,7 +271,7 @@
     private async Task ClearCanvasAsync()
     {
         await _context.FillStyleAsync("#1e1e1e");
-        await _context.FillRectAsync(0, 0, _width, _height);
+        await _context.FillRectAsync(_globalX, _globalY, _width, _height);
     }
 
     private async Task ClearAsync()
