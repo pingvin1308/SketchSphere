@@ -16,6 +16,7 @@
 <button @onclick="() => SelectToolAsync(Tool.Move)">Move</button>
 <button @onclick="() => ZoomIn()">zum +</button>
 <button @onclick="() => ZoomOut()">zum -</button>
+<button @onclick="() => ResetZoom()">Reset</button>
 
 <div
     onmousemove="@OnMouseMoveAsync"
@@ -48,7 +49,7 @@
     private double _globalX = 0;
     private double _globalY = 0;
     private double _scale = 1;
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         _context = await _canvasReference.GetContext2DAsync();
@@ -67,30 +68,36 @@
         await _context.LineCapAsync(LineCap.Round);
         await _context.LineJoinAsync(LineJoin.Round);
     }
-    
+
     private async Task ZoomIn()
     {
-        await _context.TransformAsync(
-            horizontal_scale: 1.05, 
-            vertical_skewing: 0, 
-            horizontal_skewing: 0, 
-            vertical_scaling: 1.05, 
-            horizontal_translation: 0, 
-            vertical_translation: 0);
-
+        const double step = 1.05;
+        _scale *= step;
+        await _context.ScaleAsync(step, step);
         await RenderAsync();
     }
 
     private async Task ZoomOut()
     {
-        await _context.TransformAsync(
-            horizontal_scale: 0.95, 
-            vertical_skewing: 0, 
-            horizontal_skewing: 0, 
-            vertical_scaling: 0.95, 
-            horizontal_translation: 0, 
-            vertical_translation: 0);
+        const double step = 0.95;
+        _scale *= step;
+        await _context.ScaleAsync(step, step);
+        await RenderAsync();
+    }
 
+    private async Task ResetZoom()
+    {
+        _scale = 1;
+        _globalY = 0;
+        _globalX = 0;
+
+        await _context.SetTransformAsync(
+            horizontal_scale: 1,
+            vertical_skewing: 0,
+            horizontal_skewing: 0,
+            vertical_scaling: 1,
+            horizontal_translation: 0,
+            vertical_translation: 0);
         await RenderAsync();
     }
 
@@ -102,9 +109,9 @@
         {
             return;
         }
-        
-        var x = _globalX + e.OffsetX;
-        var y = _globalY + e.OffsetY;
+
+        var x = (_globalX + e.OffsetX) * (1 / _scale);
+        var y = (_globalY + e.OffsetY) * (1 / _scale);
 
         if (_currentTool == Tool.Selection)
         {
@@ -116,7 +123,6 @@
                 }
 
                 await ClearSelection();
-                Console.WriteLine("Clear selection");
             }
             else
             {
@@ -134,60 +140,51 @@
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
-        };
-        
+            };
+
         _currentDrawingObject = currentDrawingObject;
         _drawingObjects.Add(currentDrawingObject);
     }
 
     private async Task OnMouseMoveAsync(MouseEventArgs e)
     {
-        var x = _globalX + e.OffsetX;
-        var y = _globalY + e.OffsetY;
+        var x = (_globalX + e.OffsetX) * (1 / _scale);
+        var y = (_globalY + e.OffsetY) * (1 / _scale);
         
         if (_isMouseDown && _currentTool == Tool.Move)
         {
-            _globalX -= e.MovementX;
-            _globalY -= e.MovementY;
-            
-            await _context.TransformAsync(
-                horizontal_scale: 1, 
-                vertical_skewing: 0, 
-                horizontal_skewing: 0, 
-                vertical_scaling: 1, 
-                horizontal_translation: e.MovementX, 
-                vertical_translation: e.MovementY);
+            var deltaX = e.MovementX;
+            var deltaY = e.MovementY;
+
+            _globalX -= deltaX * (1 / _scale);
+            _globalY -= deltaY * (1 / _scale);
+
+            await _context.TranslateAsync(deltaX, deltaY);
         }
 
         if (_isMouseDown && _currentDrawingObject != null)
         {
-            Action initDrawingObjectAsync = _currentDrawingObject switch
-            {
-                Freedraw freedraw => () => { freedraw.SetEnd(x, y); },
-                Rectangle or Ellipse or Diamond or Line => () =>
-                {
-                    _currentDrawingObject.SetEnd(x, y);
-                },
-                _ => throw new ArgumentOutOfRangeException(nameof(_currentDrawingObject))
-            };
-            initDrawingObjectAsync();
+            _currentDrawingObject.SetEnd(x, y);
         }
 
         if (_isMouseDown && _currentTool == Tool.Selection)
         {
+            var deltaX = e.MovementX * (1 / _scale);
+            var deltaY = e.MovementY * (1 / _scale);
+
             if (_selectionBox?.IsSelectedAndFinished == true)
             {
-                _selectionBox.Move(e.MovementX, e.MovementY);
+                _selectionBox.Move(deltaX, deltaY);
             }
             else if (_selection?.IsSelected == true)
             {
-                _selection.Move(e.MovementX, e.MovementY);
+                _selection.Move(deltaX, deltaY);
             }
         }
 
         await RenderAsync();
 
-        if (_isMouseDown 
+        if (_isMouseDown
             && _currentTool == Tool.Selection
             && (_selection == null || _selection?.IsSelected == false)
             && (_selectionBox == null || _selectionBox?.IsSelectedAndFinished == false))
@@ -200,7 +197,7 @@
         }
     }
 
-    private async Task OnMouseUpAsync(MouseEventArgs e)
+    private Task OnMouseUpAsync(MouseEventArgs e)
     {
         _isMouseDown = false;
         _isDrawingStated = false;
@@ -210,11 +207,12 @@
         {
             _selectionBox?.FinishDrawing();
         }
-        
+
         if (_selectionBox?.IsSelectedAndFinished == false)
         {
             _selectionBox = null;
         }
+        return Task.CompletedTask;
     }
 
     private async Task RenderAsync()
@@ -259,7 +257,7 @@
             _selection = null;
             await RenderAsync();
         }
-        
+
         if (_selectionBox?.IsSelectedAndFinished == true)
         {
             _selectionBox.Clear();
@@ -271,7 +269,11 @@
     private async Task ClearCanvasAsync()
     {
         await _context.FillStyleAsync("#1e1e1e");
-        await _context.FillRectAsync(_globalX, _globalY, _width, _height);
+        await _context.FillRectAsync(
+            x: _globalX * (1 / _scale),
+            y: _globalY * (1 / _scale),
+            width: _width * (1 / _scale),
+            height: _height * (1 / _scale));
     }
 
     private async Task ClearAsync()
@@ -285,4 +287,5 @@
         await ClearSelection();
         _currentTool = selectedTool;
     }
+
 }

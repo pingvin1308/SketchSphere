@@ -22,6 +22,8 @@ public sealed class Transform
     {
         _x1 = x;
         _y1 = y;
+        _x2 = x;
+        _y2 = y;
     }
 
     public void SetEnd(double x, double y)
@@ -42,5 +44,11 @@ public sealed class Transform
         _y1 += offsetY;
         _x2 += offsetX;
         _y2 += offsetY;
+    }
+    
+    
+    public override string ToString()
+    {
+        return "Transform (X1: " + X1 + ", Y1: " + Y1 + ") (X2: " + X2 + ", Y2: " + Y2 + ")";
     }
 }
