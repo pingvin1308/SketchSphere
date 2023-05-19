@@ -8,5 +8,6 @@ public enum Tool
     Ellipse,
     Line,
     Draw,
-    Move
+    Move,
+    Image
 }

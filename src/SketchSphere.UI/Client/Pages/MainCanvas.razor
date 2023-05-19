@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components
 @using Excubo.Blazor.Canvas.Contexts
 @using SketchSphere.UI.Render.Elements
+@inject IClipboardService ClipboardService
 
 <PageTitle>MainCanvas</PageTitle>
 
@@ -14,6 +15,7 @@
 <button @onclick="() => SelectToolAsync(Tool.Line)">Line</button>
 <button @onclick="() => SelectToolAsync(Tool.Draw)">Draw</button>
 <button @onclick="() => SelectToolAsync(Tool.Move)">Move</button>
+<button @onclick="() => SelectToolAsync(Tool.Image)">Image</button>
 <button @onclick="() => ZoomIn()">zum +</button>
 <button @onclick="() => ZoomOut()">zum -</button>
 <button @onclick="() => ResetZoom()">Reset</button>
@@ -21,10 +23,12 @@
 <div
     onmousemove="@OnMouseMoveAsync"
     onmousedown="@OnMouseDownAsync"
-    onmouseup="@OnMouseUpAsync">
+    onmouseup="@OnMouseUpAsync"
+    @onkeydown="@KeyboardEventHandler">
     <Canvas
         Width="@_width"
         Height="@_height"
+        tabindex="1"
         @ref="_canvasReference">
     </Canvas>
 </div>
@@ -48,6 +52,10 @@
 
     private double _globalX = 0;
     private double _globalY = 0;
+    
+    private double _mouseX = 0;
+    private double _mouseY = 0;
+    
     private double _scale = 1;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -58,6 +66,22 @@
         {
             await SetDefaultStyleSettings();
             await ClearCanvasAsync();
+        }
+    }
+
+    private async Task KeyboardEventHandler(KeyboardEventArgs args)
+    {
+        Console.WriteLine("Key pressed: " + args.Key + " " + args.Code + " " + args.CtrlKey);
+        
+        DrawingObject currentDrawingObject = _currentTool switch
+        {
+            Tool.Image => await ClipboardService.GetImage(_mouseX, _mouseY),
+        };
+
+        if (currentDrawingObject is Image image)
+        {
+            await image.DrawAsync(_context);
+            _drawingObjects.Add(currentDrawingObject);
         }
     }
 
@@ -112,7 +136,7 @@
 
         var x = (_globalX + e.OffsetX) * (1 / _scale);
         var y = (_globalY + e.OffsetY) * (1 / _scale);
-
+        
         if (_currentTool == Tool.Selection)
         {
             if (_selectionBox?.IsSelectedAndFinished == true)
@@ -139,8 +163,14 @@
             Tool.Ellipse => new Ellipse(x, y),
             Tool.Line => new Line(x, y),
             Tool.Draw => new Freedraw(x, y),
+            Tool.Image => await ClipboardService.GetImage(x, y),
             _ => throw new ArgumentOutOfRangeException(nameof(_currentTool), _currentTool, null)
             };
+
+        if (currentDrawingObject is Image image)
+        {
+            await image.DrawAsync(_context);
+        }
 
         _currentDrawingObject = currentDrawingObject;
         _drawingObjects.Add(currentDrawingObject);
@@ -151,6 +181,9 @@
         var x = (_globalX + e.OffsetX) * (1 / _scale);
         var y = (_globalY + e.OffsetY) * (1 / _scale);
         
+        _mouseX = x;
+        _mouseY = y;
+
         if (_isMouseDown && _currentTool == Tool.Move)
         {
             var deltaX = e.MovementX;
@@ -287,5 +320,4 @@
         await ClearSelection();
         _currentTool = selectedTool;
     }
-
 }
