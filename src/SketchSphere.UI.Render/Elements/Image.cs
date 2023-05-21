@@ -24,12 +24,18 @@ public class Image : DrawingObject
     public override async Task DrawAsync(Context2D context)
     {
         await _js.InvokeVoidAsync("eval", $"myimage = getImage('{_source}')");
+        
         await context.DrawImageAsync(
             image: "myimage",
             dx: Transform.X1,
             dy: Transform.Y1,
             dwidth: Transform.Width,
             dheight: Transform.Height);
+    }
+
+    public string GetSource()
+    {
+        return _source;
     }
 
     public override bool IsHit(double x, double y)

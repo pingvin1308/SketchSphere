@@ -1,4 +1,5 @@
-﻿using Microsoft.JSInterop;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using SketchSphere.UI.Render.Elements;
 
 namespace SketchSphere.UI.Client;
@@ -12,12 +13,24 @@ public class ClipboardService : IClipboardService
         _jsInterop = jsInterop;
     }
 
-    public async ValueTask<Image> GetImage(double x, double y)
+    public async ValueTask<Image> GetImage(double x, double y, string source)
     {
-        var source = await _jsInterop.InvokeAsync<string>("pasteFromClipboard");
         var imageSize = await _jsInterop.InvokeAsync<Size>("getImageSize", source);
         return new Image(_jsInterop, source, x, y, imageSize.Width, imageSize.Height);
     }
 
-    private record Size(double Width, double Height);
+    public record Size(double Width, double Height);
+}
+
+public class PasteMultimediaEventsArgs: EventArgs
+{
+    public bool IsMultimedia { get; set; }
+    public string Data { get; set; }
+}
+
+[EventHandler("onpastemultimedia", typeof(PasteMultimediaEventsArgs),
+    enableStopPropagation: true, enablePreventDefault: true)]
+public static class EventHandlers
+{
+ 
 }

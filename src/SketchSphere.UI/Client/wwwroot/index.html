@@ -29,10 +29,12 @@
 </div>
 <script src="_framework/blazor.webassembly.js"></script>
 <script src="_content/Blazor.Extensions.Canvas/blazor.extensions.canvas.js"></script>
-<script src="/scripts/CallingDotNetFromJavaScript.js"></script>
+<script src="customEvent.js"></script>
 <script>
     window.pasteFromClipboard = async () => {
         const clipboardContents = await navigator.clipboard.read();
+        console.log(clipboardContents);
+        
         for (const item of clipboardContents) {
             if (!item.types.includes("image/png")) {
                 throw new Error("Clipboard contains non-image data.");
@@ -58,7 +60,6 @@
     window.getImage = (source) => {
         const image = new Image();
         image.src = source;
-
         return image;
     }
 

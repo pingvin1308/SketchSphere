@@ -94,6 +94,11 @@ public class SelectionBox : DrawingObject
             }
         }
     }
+    
+    public HashSet<DrawingObject> Get()
+    {
+        return _selectedObjects;
+    }
 
     public override void Move(double offsetX, double offsetY)
     {

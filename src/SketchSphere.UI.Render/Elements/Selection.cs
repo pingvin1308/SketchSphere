@@ -73,6 +73,11 @@ public class Selection : DrawingObject
     {
         _selectedObject = drawingObjects;
     }
+    
+    public DrawingObject? Get()
+    {
+        return _selectedObject;
+    }
 
     public void Clear()
     {
